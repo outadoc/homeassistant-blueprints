@@ -1,0 +1,33 @@
+blueprint:
+  name: Twitch Game Notifier
+  description: Notifies you when a Twitch streamer starts playing a different game
+  domain: automation
+  input:
+    sensor_twitch:
+      name: Twitch Entity
+      description: The Twitch streamer entity to observe. Once your automation is created, you can duplicate the "trigger" as many times as you wish to observe multiple streamers.
+    notify_to:
+      name: Notification Target
+      description: The notification entity to use to send the notification.
+
+trigger:
+  - platform: state
+    entity_id: !input sensor_twitch
+    attribute: game
+
+condition:
+  - condition: template
+    value_template: '{{ trigger.to_state.state == ''streaming'' }}'
+
+action:
+  - service: !input notify_to
+    data:
+      title: '{{ state_attr(trigger.entity_id, "friendly_name") }} is playing {{ state_attr(trigger.entity_id, "game") }}'
+      message: '{{ state_attr(trigger.entity_id, "title") }}'
+      data:
+        channel: Twitch
+        clickAction: 'https://twitch.tv/{{ state_attr(trigger.entity_id, ''friendly_name'') }}'
+        icon_url: '{{ state_attr(trigger.entity_id, "entity_picture") }}'
+
+mode: parallel
+max: 10
